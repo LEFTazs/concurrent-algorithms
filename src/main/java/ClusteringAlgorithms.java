@@ -51,6 +51,7 @@ public class ClusteringAlgorithms {
     }
     
     private static void adjustClusters() {
+        clusters = new int[sizeOfData];
         for (int i = 0; i < sizeOfData; i++) {
             FloatList distances = calculateDataDistanceFromClusterCenters(i);
             chooseClastersForOneData(distances, i);
@@ -71,7 +72,6 @@ public class ClusteringAlgorithms {
     }
     
     private static void chooseClastersForOneData(FloatList distances, int i) {
-        clusters = new int[sizeOfData];
         for (int cp = 0; cp < distances.size(); cp++) {
             if (distances.get(cp) == distances.min()) {
                 clusters[i] = cp;
