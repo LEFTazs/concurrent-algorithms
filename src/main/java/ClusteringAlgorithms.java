@@ -4,18 +4,16 @@ import processing.data.FloatList;
 
 public class ClusteringAlgorithms {
     
-    private static VectorFloat[] data;
+    private static VectorFloat[] dataPoints;
     private static VectorFloat[] clusterCenters;
     private static int[] clusters;
-    private static int sizeOfData;
     private static int numberOfDimensions;
     private static int numberOfClusters;
 
-    public static int[] kmeans(int k, VectorFloat[] data, int iterations) {
-        ClusteringAlgorithms.data = data;
+    public static int[] kmeans(int k, VectorFloat[] dataPoints, int iterations) {
+        ClusteringAlgorithms.dataPoints = dataPoints;
         ClusteringAlgorithms.numberOfClusters = k;
-        ClusteringAlgorithms.sizeOfData = data.length;
-        ClusteringAlgorithms.numberOfDimensions = data[0].size();
+        ClusteringAlgorithms.numberOfDimensions = dataPoints[0].size();
         
         checkInputDataSizeValidity();
         
@@ -30,7 +28,7 @@ public class ClusteringAlgorithms {
     
     private static void checkInputDataSizeValidity() {
         for (int i = 1; i < numberOfDimensions; i++) {
-            if (data[i].size() != numberOfDimensions) {
+            if (dataPoints[i].size() != numberOfDimensions) {
                 throw new IllegalArgumentException("Input dimensions do not match!");
             }
         }
@@ -40,15 +38,15 @@ public class ClusteringAlgorithms {
         Random random = new Random();
         clusterCenters = new VectorFloat[numberOfClusters];
         for (int i = 0; i < numberOfClusters; i++) {
-            int chosenId = random.nextInt(sizeOfData);
-            VectorFloat vectorToCopy = data[chosenId];
+            int chosenId = random.nextInt(dataPoints.length);
+            VectorFloat vectorToCopy = dataPoints[chosenId];
             clusterCenters[i] = new VectorFloat(vectorToCopy);
         }
     }
     
     private static void adjustClusters() {
-        clusters = new int[sizeOfData];
-        for (int i = 0; i < sizeOfData; i++) {
+        clusters = new int[dataPoints.length];
+        for (int i = 0; i < dataPoints.length; i++) {
             FloatList distances = calculateDataDistanceFromClusterCenters(i);
             chooseClasterForOneData(distances, i);
         }
@@ -58,7 +56,7 @@ public class ClusteringAlgorithms {
     private static FloatList calculateDataDistanceFromClusterCenters(int i) {
         FloatList distances = new FloatList();
         for (int j = 0; j < numberOfClusters; j++) {
-            double distance = data[i].distance(clusterCenters[j]);
+            double distance = dataPoints[i].distance(clusterCenters[j]);
             distances.append((float) distance);
         }
         return distances;
@@ -78,9 +76,9 @@ public class ClusteringAlgorithms {
             for (int j = 0; j < numberOfDimensions; j++) {
                 float mean = 0;
                 int count = 0;
-                for (int k = 0; k < sizeOfData; k++) {
+                for (int k = 0; k < dataPoints.length; k++) {
                     if (clusters[k] == i) {
-                        mean += data[k].get(j);
+                        mean += dataPoints[k].get(j);
                         count++;
                     }
                 }
