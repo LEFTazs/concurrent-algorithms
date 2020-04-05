@@ -18,7 +18,7 @@ public class Drawer extends PApplet {
     int screenSize = 250;
     int clusterSize = 6;
     int iterations = 1000;
-    FloatList[] data = new FloatList[3];
+    VectorFloat[] data;
     
     boolean original = false;
 
@@ -29,10 +29,6 @@ public class Drawer extends PApplet {
         size(img.width, img.height);
 
         imgChanged = createImage(img.width, img.height, RGB);
-
-        data[0] = new FloatList();
-        data[1] = new FloatList();
-        data[2] = new FloatList();
     }
 
     int[] output;
@@ -42,15 +38,19 @@ public class Drawer extends PApplet {
     public void setup() {
         img.loadPixels();
 
+        data = new VectorFloat[img.pixels.length];
+        int currentVectorId = 0;
         for (int h = 0; h < img.height; h++) {
             for (int w = 0; w < img.width; w++) {
-                data[0].append(red(img.pixels[w + h * img.width]));
-                data[1].append(green(img.pixels[w + h * img.width]));
-                data[2].append(blue(img.pixels[w + h * img.width]));
+                data[currentVectorId] = new VectorFloat(3); //3: the number of channels (r,g,b)
+                data[currentVectorId].set(0, red(img.pixels[w + h * img.width]));
+                data[currentVectorId].set(1, green(img.pixels[w + h * img.width]));
+                data[currentVectorId].set(2, blue(img.pixels[w + h * img.width]));
+                currentVectorId++;
             }
         }
 
-        output = ClusteringAlgorithms.kmeans(data, clusterSize, iterations);
+        output = ClusteringAlgorithms.kmeans(clusterSize, data, iterations);
 
         colors = new int[clusterSize];
         for (int c = 0; c < colors.length; c++) {
