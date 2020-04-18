@@ -10,11 +10,11 @@ public class ClusteringAlgorithms {
     private static VectorFloat[] clusterCenters;
     private static int[] clusters;
     private static int numberOfDimensions;
-    private static int numberOfClusters;
+    private static int K;
 
     public static int[] kmeans(int k, VectorFloat[] dataPoints, int iterations) {
         ClusteringAlgorithms.dataPoints = dataPoints;
-        ClusteringAlgorithms.numberOfClusters = k;
+        ClusteringAlgorithms.K = k;
         ClusteringAlgorithms.numberOfDimensions = dataPoints[0].size();
         
         checkInputDataSizeValidity();
@@ -38,8 +38,8 @@ public class ClusteringAlgorithms {
     
     private static void generateRandomClusterCenters() {
         Random random = new Random();
-        clusterCenters = new VectorFloat[numberOfClusters];
-        for (int i = 0; i < numberOfClusters; i++) {
+        clusterCenters = new VectorFloat[K];
+        for (int i = 0; i < K; i++) {
             int chosenId = random.nextInt(dataPoints.length);
             VectorFloat vectorToCopy = dataPoints[chosenId];
             clusterCenters[i] = new VectorFloat(vectorToCopy);
@@ -49,19 +49,10 @@ public class ClusteringAlgorithms {
     private static void adjustClusters() {
         clusters = new int[dataPoints.length];
         for (int i = 0; i < dataPoints.length; i++) {
-            double[] distances = calculateDataDistanceFromClusterCenters(dataPoints[i]);
+            double[] distances = dataPoints[i].distancesFrom(clusterCenters);
             clusters[i] = getIndexOfSmallestDistance(distances);
         }
         calculateClusterCenters(clusters);
-    }
-    
-    private static double[] calculateDataDistanceFromClusterCenters(VectorFloat vector) {
-        double[] distances = new double[numberOfClusters];
-        for (int j = 0; j < numberOfClusters; j++) {
-            double distance = vector.distance(clusterCenters[j]);
-            distances[j] = distance;
-        }
-        return distances;
     }
     
     private static int getIndexOfSmallestDistance(double[] distances) {
@@ -75,7 +66,7 @@ public class ClusteringAlgorithms {
     }
     
     private static void calculateClusterCenters(int[] clusters) {
-        for (int i = 0; i < numberOfClusters; i++) {
+        for (int i = 0; i < K; i++) {
             for (int j = 0; j < numberOfDimensions; j++) {
                 float mean = 0;
                 int count = 0;

@@ -31,7 +31,7 @@ public class VectorFloat extends Vector<Float> {
         return Collections.min(valuesAsList);
     }
     
-    public double distance(VectorFloat other) {
+    public double distanceFrom(VectorFloat other) {
         if (other.size() != this.size())
             throw new IllegalArgumentException("Invalid input size.");
         
@@ -40,5 +40,13 @@ public class VectorFloat extends Vector<Float> {
             distance += Math.pow(this.get(i) - other.get(i), 2);
         }
         return Math.sqrt(distance);
+    }
+    
+    public double[] distancesFrom(VectorFloat[] others) {
+        double[] distances = new double[others.length];
+        for (int i = 0; i < others.length; i++) {
+            distances[i] = distanceFrom(others[i]);
+        }
+        return distances;
     }
 }
