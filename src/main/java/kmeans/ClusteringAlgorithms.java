@@ -1,16 +1,14 @@
 package kmeans;
 
 import java.util.Random;
-import processing.core.PApplet;
-import processing.data.FloatList;
 
 public class ClusteringAlgorithms {
     
-    private static VectorFloat[] dataPoints;
-    private static VectorFloat[] clusterCenters;
-    private static int[] clusters;
-    private static int numberOfDimensions;
-    private static int K;
+    protected static VectorFloat[] dataPoints;
+    protected static VectorFloat[] clusterCenters;
+    protected static int[] clusters;
+    protected static int numberOfDimensions;
+    protected static int K;
 
     public static int[] kmeans(int k, VectorFloat[] dataPoints, int iterations) {
         ClusteringAlgorithms.dataPoints = dataPoints;
@@ -28,7 +26,7 @@ public class ClusteringAlgorithms {
         return clusters;
     }
     
-    private static void checkInputDataSizeValidity() {
+    protected static void checkInputDataSizeValidity() {
         for (int i = 1; i < numberOfDimensions; i++) {
             if (dataPoints[i].size() != numberOfDimensions) {
                 throw new IllegalArgumentException("Input dimensions do not match!");
@@ -36,7 +34,7 @@ public class ClusteringAlgorithms {
         }
     }
     
-    private static void generateRandomClusterCenters() {
+    protected static void generateRandomClusterCenters() {
         Random random = new Random();
         clusterCenters = new VectorFloat[K];
         for (int i = 0; i < K; i++) {
@@ -46,7 +44,7 @@ public class ClusteringAlgorithms {
         }
     }
     
-    private static void adjustClusters() {
+    protected static void adjustClusters() {
         clusters = new int[dataPoints.length];
         for (int i = 0; i < dataPoints.length; i++) {
             double[] distances = dataPoints[i].distancesFrom(clusterCenters);
@@ -55,7 +53,7 @@ public class ClusteringAlgorithms {
         calculateClusterCenters(clusters);
     }
     
-    private static int getIndexOfSmallestDistance(double[] distances) {
+    protected static int getIndexOfSmallestDistance(double[] distances) {
         int minimumDistanceId = 0;
         for (int j = 1; j < distances.length; j++) {
             if (distances[j] < distances[minimumDistanceId]) {
@@ -65,7 +63,7 @@ public class ClusteringAlgorithms {
         return minimumDistanceId;
     }
     
-    private static void calculateClusterCenters(int[] clusters) {
+    protected static void calculateClusterCenters(int[] clusters) {
         for (int i = 0; i < K; i++) {
             for (int j = 0; j < numberOfDimensions; j++) {
                 float mean = 0;
