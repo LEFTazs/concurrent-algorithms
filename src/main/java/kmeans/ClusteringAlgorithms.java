@@ -1,3 +1,5 @@
+package kmeans;
+
 import java.util.Random;
 import processing.core.PApplet;
 import processing.data.FloatList;
@@ -47,28 +49,29 @@ public class ClusteringAlgorithms {
     private static void adjustClusters() {
         clusters = new int[dataPoints.length];
         for (int i = 0; i < dataPoints.length; i++) {
-            FloatList distances = calculateDataDistanceFromClusterCenters(i);
-            chooseClasterForOneData(distances, i);
+            double[] distances = calculateDataDistanceFromClusterCenters(dataPoints[i]);
+            clusters[i] = getIndexOfSmallestDistance(distances);
         }
         calculateClusterCenters(clusters);
     }
     
-    private static FloatList calculateDataDistanceFromClusterCenters(int i) {
-        FloatList distances = new FloatList();
+    private static double[] calculateDataDistanceFromClusterCenters(VectorFloat vector) {
+        double[] distances = new double[numberOfClusters];
         for (int j = 0; j < numberOfClusters; j++) {
-            double distance = dataPoints[i].distance(clusterCenters[j]);
-            distances.append((float) distance);
+            double distance = vector.distance(clusterCenters[j]);
+            distances[j] = distance;
         }
         return distances;
     }
     
-    private static void chooseClasterForOneData(FloatList distances, int i) {
-        for (int j = 0; j < distances.size(); j++) {
-            if (distances.get(j) == distances.min()) {
-                clusters[i] = j;
-                return;
+    private static int getIndexOfSmallestDistance(double[] distances) {
+        int minimumDistanceId = 0;
+        for (int j = 1; j < distances.length; j++) {
+            if (distances[j] < distances[minimumDistanceId]) {
+                minimumDistanceId = j;
             }
         }
+        return minimumDistanceId;
     }
     
     private static void calculateClusterCenters(int[] clusters) {

@@ -1,3 +1,7 @@
+package usecases;
+
+import kmeans.VectorFloat;
+import kmeans.ClusteringAlgorithms;
 import processing.core.*;
 import processing.data.*;
 import processing.event.*;
@@ -12,7 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 
-public class Drawer extends PApplet {
+public class ImageDrawer extends PApplet {
     PImage img;
     PImage imgChanged;
     int screenSize = 250;
@@ -24,7 +28,7 @@ public class Drawer extends PApplet {
 
     @Override
     public void settings() {
-        img = loadImage("garden.jpg");
+        img = loadImage("https://preview.redd.it/6pdgr1lhfys41.png?width=640&crop=smart&auto=webp&s=8ecb41eca02b689dc809518fddaa6108a034e9a2");
         img.resize(screenSize * img.width / img.height, screenSize);
         size(img.width, img.height);
 

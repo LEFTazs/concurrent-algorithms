@@ -1,4 +1,8 @@
+package usecases;
 
+
+import kmeans.ClusteringAlgorithms;
+import kmeans.VectorFloat;
 import processing.core.*;
 import processing.data.*;
 import processing.event.*;
