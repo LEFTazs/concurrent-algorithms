@@ -63,7 +63,7 @@ public class ClusteringAlgorithmsConcurrent extends ClusteringAlgorithms {
     
     private static VectorFloat[][] splitArray(VectorFloat[] array, int splitsize) {
         if (array.length < splitsize)
-            throw new IllegalArgumentException("Argument 'parts' is larger than the array size.");
+            throw new IllegalArgumentException("Argument 'splitsize' is larger than the array size.");
         
         VectorFloat[][] arrayParts = new VectorFloat[splitsize][];
         int partSizes = array.length / splitsize;
@@ -85,7 +85,7 @@ public class ClusteringAlgorithmsConcurrent extends ClusteringAlgorithms {
         }
         return arrayParts;
     }
-    
+        
     private static class SubTaskCalculateClusters extends Thread implements Runnable {
         private VectorFloat[] data;
         private int[] clusters;
@@ -116,81 +116,99 @@ public class ClusteringAlgorithmsConcurrent extends ClusteringAlgorithms {
     
     
     protected static void calculateClusterCenters() {
-        for (int i = 0; i < K; i++) {
-            for (int j = 0; j < numberOfDimensions; j++) {
-                VectorFloat[][] subArrays = splitArray(dataPoints, threads);
-                SubTaskCalculateClusterMeans[] subtasks = 
-                        initalizeAndStartCalculateClusterMeansSubTasks(subArrays, i, j);
-                float mean = finishCalculateClusterMeansSubTasks(subtasks);
-                clusterCenters[i].set(j, mean);
-            }
-        }
+        int currentlyUsedThreads = chooseThreadNumber(K, numberOfDimensions);
+        int[] clusterSplits = splitRange(0, K, currentlyUsedThreads);
+        int[] dimensionSplits = splitRange(0, numberOfDimensions, currentlyUsedThreads);
+        SubTaskCalculateClusterMeans[] subtasks = 
+                initalizeAndStartCalculateClusterMeansSubTasks(currentlyUsedThreads, clusterSplits, dimensionSplits);
+        finishCalculateClusterMeansSubTasks(subtasks);
     }
     
-    private static SubTaskCalculateClusterMeans[] initalizeAndStartCalculateClusterMeansSubTasks(VectorFloat[][] splitArray, int currentCluster, int currentDimension) {
+    private static int[] splitRange(int from, int to, int splitsize) {
+        int rangeSize = to - from;
+        
+        if (rangeSize < splitsize)
+            throw new IllegalArgumentException("Argument 'splitsize' is larger than the range.");
+        
+        int partSizes = rangeSize / splitsize;
+        boolean areAllSplitsEqualSize = (rangeSize % splitsize) == 0;
+        int[] splits = new int[splitsize];
+        if (areAllSplitsEqualSize) {
+            for (int i = 0; i < splitsize; i++) {
+                splits[i] = (i+1) * partSizes;
+            }
+        } else {
+            partSizes++;
+            for (int i = 0; i < splitsize - 1; i++) {
+                splits[i] = (i+1) * partSizes;
+            }
+            splits[splitsize - 1] = to;
+        }
+        
+        return splits;
+    }
+    
+    private static int chooseThreadNumber(int K, int numberOfDimensions) {
+        return Math.min(threads, Math.min(K, numberOfDimensions));
+    }
+    
+    private static SubTaskCalculateClusterMeans[] initalizeAndStartCalculateClusterMeansSubTasks(int threads, int[] clusterSplits, int[] dimensionSplits) {
         SubTaskCalculateClusterMeans[] subtasks = new SubTaskCalculateClusterMeans[threads];
-        for (int i = 0; i < subtasks.length; i++) {
-            int dataStartPosition = i*splitArray[i].length;
-            subtasks[i] = new SubTaskCalculateClusterMeans(splitArray[i], dataStartPosition, currentCluster, currentDimension);
+        subtasks[0] = new SubTaskCalculateClusterMeans(0, clusterSplits[0], 0, dimensionSplits[0]);
+        for (int i = 1; i < subtasks.length; i++) {
+            subtasks[i] = new SubTaskCalculateClusterMeans(clusterSplits[i-1], clusterSplits[i], dimensionSplits[i-1], dimensionSplits[i]);
             subtasks[i].start();
         }
         return subtasks;
     }
     
-    private static float finishCalculateClusterMeansSubTasks(SubTaskCalculateClusterMeans[] subtasks) {
+    private static void finishCalculateClusterMeansSubTasks(SubTaskCalculateClusterMeans[] subtasks) {
         try {
-            return tryFinishCalculateClusterMeansSubTasks(subtasks);
+            tryFinishCalculateClusterMeansSubTasks(subtasks);
         } catch (InterruptedException ex) {
             System.err.println(ex.getMessage());
         }
-        return 0F;
     }
     
-    private static float tryFinishCalculateClusterMeansSubTasks(SubTaskCalculateClusterMeans[] subtasks) throws InterruptedException {
-        float sum = 0F;
-        int count = 0;
+    private static void tryFinishCalculateClusterMeansSubTasks(SubTaskCalculateClusterMeans[] subtasks) throws InterruptedException {
         for (int i = 0; i < subtasks.length; i++) {
             subtasks[i].join();
-            sum += subtasks[i].getSum();
-            count += subtasks[i].getCount();
         }
-        return sum / count;
     }
-
     
     private static class SubTaskCalculateClusterMeans extends Thread implements Runnable {
-        private VectorFloat[] data;
-        private int currentCluster;
-        private int currentDimension;
-        private float sum;
-        private int count;
-        private int dataStartPosition;
+        private int fromCluster;
+        private int toCluster;
+        private int fromDimension;
+        private int toDimension;
         
-        SubTaskCalculateClusterMeans(VectorFloat[] data, int dataStartPosition, int currentCluster, int currentDimension) {
-            this.data = data;
-            this.currentCluster = currentCluster;
-            this.currentDimension = currentDimension;
-            this.sum = 0F;
-            this.count = 0;
-            this.dataStartPosition = dataStartPosition;
+        SubTaskCalculateClusterMeans(int fromCluster, int toCluster, int fromDimension, int toDimension) {
+            this.fromCluster = fromCluster;
+            this.toCluster = toCluster;
+            this.fromDimension = fromDimension;
+            this.toDimension = toDimension;
         }
         
         @Override
         public void run() {
-            for (int k = 0; k < this.data.length; k++) {
-                if (clusters[this.dataStartPosition + k] == this.currentCluster) {
-                    this.sum += this.data[k].get(this.currentDimension);
-                    this.count++;
+            for (int i = fromCluster; i < toCluster; i++) {
+                for (int j = fromDimension; j < toDimension; j++) {
+                    float mean = 0;
+                    int count = 0;
+                    for (int k = 0; k < dataPoints.length; k++) {
+                        if (clusters[k] == i) {
+                            mean += dataPoints[k].get(j);
+                            count++;
+                        }
+                    }
+                    mean /= count;
+                    synchronized(clusterCenters[i]) {
+                        clusterCenters[i].set(j, mean);
+                    }
                 }
             }
         }
         
-        public float getSum() {
-            return sum;
-        }
-
-        public int getCount() {
-            return count;
-        }
+        
     }
 }
