@@ -26,30 +26,30 @@ public class ClusteringAlgorithmsConcurrent extends ClusteringAlgorithms {
     
     protected static void adjustClusters() {
         VectorFloat[][] subArrays = splitArray(dataPoints, threads);
-        SubTask[] subtasks = initalizeAndStartSubTasks(subArrays);
-        clusters = finishSubTasks(subtasks);
-        calculateClusterCenters(clusters);
+        SubTaskCalculateClusters[] subtasks = initalizeAndStartCalculateClustersSubTasks(subArrays);
+        clusters = finishCalculateClustersSubTasks(subtasks);
+        calculateClusterCenters();
     }
     
-    private static SubTask[] initalizeAndStartSubTasks(VectorFloat[][] splitArray) {
-        SubTask[] subtasks = new SubTask[threads];
+    private static SubTaskCalculateClusters[] initalizeAndStartCalculateClustersSubTasks(VectorFloat[][] splitArray) {
+        SubTaskCalculateClusters[] subtasks = new SubTaskCalculateClusters[threads];
         for (int i = 0; i < subtasks.length; i++) {
-            subtasks[i] = new SubTask(splitArray[i]);
+            subtasks[i] = new SubTaskCalculateClusters(splitArray[i]);
             subtasks[i].start();
         }
         return subtasks;
     }
     
-    private static int[] finishSubTasks(SubTask[] subtasks) {
+    private static int[] finishCalculateClustersSubTasks(SubTaskCalculateClusters[] subtasks) {
         try {
-            return tryFinishSubTasks(subtasks);
+            return tryFinishCalculateClustersSubTasks(subtasks);
         } catch (InterruptedException ex) {
             System.err.println(ex.getMessage());
         }
         return new int[0];
     }
     
-    private static int[] tryFinishSubTasks(SubTask[] subtasks) throws InterruptedException {
+    private static int[] tryFinishCalculateClustersSubTasks(SubTaskCalculateClusters[] subtasks) throws InterruptedException {
         int subtaskSize = subtasks[0].getTaskSize();
         int lastSubtaskSize = subtasks[subtasks.length - 1].getTaskSize();
         int[] results = new int[(subtasks.length - 1) * subtaskSize + lastSubtaskSize];
@@ -86,12 +86,12 @@ public class ClusteringAlgorithmsConcurrent extends ClusteringAlgorithms {
         return arrayParts;
     }
     
-    private static class SubTask extends Thread implements Runnable {
+    private static class SubTaskCalculateClusters extends Thread implements Runnable {
         private VectorFloat[] data;
         private int[] clusters;
         private int taskSize;
         
-        SubTask(VectorFloat[] data) {
+        SubTaskCalculateClusters(VectorFloat[] data) {
             this.data = data;
             this.clusters = new int[data.length];
             this.taskSize = data.length;
@@ -111,6 +111,86 @@ public class ClusteringAlgorithmsConcurrent extends ClusteringAlgorithms {
 
         public int getTaskSize() {
             return taskSize;
+        }
+    }
+    
+    
+    protected static void calculateClusterCenters() {
+        for (int i = 0; i < K; i++) {
+            for (int j = 0; j < numberOfDimensions; j++) {
+                VectorFloat[][] subArrays = splitArray(dataPoints, threads);
+                SubTaskCalculateClusterMeans[] subtasks = 
+                        initalizeAndStartCalculateClusterMeansSubTasks(subArrays, i, j);
+                float mean = finishCalculateClusterMeansSubTasks(subtasks);
+                clusterCenters[i].set(j, mean);
+            }
+        }
+    }
+    
+    private static SubTaskCalculateClusterMeans[] initalizeAndStartCalculateClusterMeansSubTasks(VectorFloat[][] splitArray, int currentCluster, int currentDimension) {
+        SubTaskCalculateClusterMeans[] subtasks = new SubTaskCalculateClusterMeans[threads];
+        for (int i = 0; i < subtasks.length; i++) {
+            int dataStartPosition = i*splitArray[i].length;
+            subtasks[i] = new SubTaskCalculateClusterMeans(splitArray[i], dataStartPosition, currentCluster, currentDimension);
+            subtasks[i].start();
+        }
+        return subtasks;
+    }
+    
+    private static float finishCalculateClusterMeansSubTasks(SubTaskCalculateClusterMeans[] subtasks) {
+        try {
+            return tryFinishCalculateClusterMeansSubTasks(subtasks);
+        } catch (InterruptedException ex) {
+            System.err.println(ex.getMessage());
+        }
+        return 0F;
+    }
+    
+    private static float tryFinishCalculateClusterMeansSubTasks(SubTaskCalculateClusterMeans[] subtasks) throws InterruptedException {
+        float sum = 0F;
+        int count = 0;
+        for (int i = 0; i < subtasks.length; i++) {
+            subtasks[i].join();
+            sum += subtasks[i].getSum();
+            count += subtasks[i].getCount();
+        }
+        return sum / count;
+    }
+
+    
+    private static class SubTaskCalculateClusterMeans extends Thread implements Runnable {
+        private VectorFloat[] data;
+        private int currentCluster;
+        private int currentDimension;
+        private float sum;
+        private int count;
+        private int dataStartPosition;
+        
+        SubTaskCalculateClusterMeans(VectorFloat[] data, int dataStartPosition, int currentCluster, int currentDimension) {
+            this.data = data;
+            this.currentCluster = currentCluster;
+            this.currentDimension = currentDimension;
+            this.sum = 0F;
+            this.count = 0;
+            this.dataStartPosition = dataStartPosition;
+        }
+        
+        @Override
+        public void run() {
+            for (int k = 0; k < this.data.length; k++) {
+                if (clusters[this.dataStartPosition + k] == this.currentCluster) {
+                    this.sum += this.data[k].get(this.currentDimension);
+                    this.count++;
+                }
+            }
+        }
+        
+        public float getSum() {
+            return sum;
+        }
+
+        public int getCount() {
+            return count;
         }
     }
 }

@@ -50,7 +50,7 @@ public class ClusteringAlgorithms {
             double[] distances = dataPoints[i].distancesFrom(clusterCenters);
             clusters[i] = getIndexOfSmallestDistance(distances);
         }
-        calculateClusterCenters(clusters);
+        calculateClusterCenters();
     }
     
     protected static int getIndexOfSmallestDistance(double[] distances) {
@@ -63,7 +63,7 @@ public class ClusteringAlgorithms {
         return minimumDistanceId;
     }
     
-    protected static void calculateClusterCenters(int[] clusters) {
+    protected static void calculateClusterCenters() {
         for (int i = 0; i < K; i++) {
             for (int j = 0; j < numberOfDimensions; j++) {
                 float mean = 0;
