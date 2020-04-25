@@ -3,6 +3,7 @@ package usecases;
 import java.util.Random;
 import kmeans.ClusteringAlgorithms;
 import kmeans.VectorFloat;
+import kmeans_concurrent.ClusteringAlgorithmsConcurrent;
 
 public class FakeDataClusterer {
     static final float maxRandomValue = 100F;
@@ -28,6 +29,6 @@ public class FakeDataClusterer {
         
         System.out.println("Clustering . . .");
         
-        ClusteringAlgorithms.kmeans(k, data, iterations);
+        ClusteringAlgorithmsConcurrent.kmeans(k, data, iterations, 4);
     }
 }

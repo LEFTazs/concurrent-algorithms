@@ -3,18 +3,7 @@ package usecases;
 import kmeans.VectorFloat;
 import kmeans.ClusteringAlgorithms;
 import processing.core.*;
-import processing.data.*;
-import processing.event.*;
-import processing.opengl.*;
-
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.io.File;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
+import kmeans_concurrent.ClusteringAlgorithmsConcurrent;
 
 public class ImageDrawer extends PApplet {
     PImage img;
@@ -54,7 +43,7 @@ public class ImageDrawer extends PApplet {
             }
         }
 
-        output = ClusteringAlgorithms.kmeans(clusterSize, data, iterations);
+        output = ClusteringAlgorithmsConcurrent.kmeans(clusterSize, data, iterations, 4);
 
         colors = new int[clusterSize];
         for (int c = 0; c < colors.length; c++) {
