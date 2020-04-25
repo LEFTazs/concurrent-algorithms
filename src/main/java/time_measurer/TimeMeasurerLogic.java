@@ -1,9 +1,12 @@
+package time_measurer;
+
 /**
  *
  * @author soma
  */
 import java.io.*;
 import java.util.Random;
+import kmeans.VectorFloat;
 
 public class TimeMeasurerLogic {
     final String FILENAME = "Time measurements.txt";

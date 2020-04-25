@@ -1,3 +1,7 @@
+package time_measurer;
+
+import kmeans.VectorFloat;
+
 /**
  *
  * @author soma
