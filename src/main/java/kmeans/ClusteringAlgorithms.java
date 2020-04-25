@@ -27,8 +27,8 @@ public class ClusteringAlgorithms {
     }
     
     protected static void checkInputDataSizeValidity() {
-        for (int i = 1; i < numberOfDimensions; i++) {
-            if (dataPoints[i].size() != numberOfDimensions) {
+        for (VectorFloat data : dataPoints) {
+            if (data.size() != numberOfDimensions) {
                 throw new IllegalArgumentException("Input dimensions do not match!");
             }
         }
